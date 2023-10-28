@@ -258,14 +258,8 @@ func main() {
 	scheduleMap = make(map[string][int(NumSlots) * int(NumDays)]bool)
 
 	for _, item := range resp.Data.Items {
-		// 检查"提交人"字段是否存在
-		submitterSlice, ok := item.Fields["提交人"].([]interface{})
-		if !ok || len(submitterSlice) == 0 {
-			continue // 如果没有找到提交人或提交人字段的类型不正确，则跳过此记录
-		}
-
 		// 从"提交人"map中获取名字
-		submitterMap, ok := submitterSlice[0].(map[string]interface{})
+		submitterMap, ok := item.Fields["提交人"].(map[string]interface{})
 		if !ok {
 			continue // 如果第一个元素不是 map，则跳过此纪录
 		}
