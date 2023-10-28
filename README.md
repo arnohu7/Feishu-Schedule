@@ -17,6 +17,15 @@ go env -w GO111MODULE=on
 go env -w GOPROXY=https://goproxy.cn,direct
 ```
 
+安装 `go` 必要插件：
+
+```
+go install -v github.com/rogpeppe/godef@latest
+go install -v golang.org/x/tools/cmd/goimports@latest
+go install -v github.com/ramya-rao-a/go-outline@latest
+go install -v golang.org/x/tools/gopls@latest
+```
+
 之后再在 `backend` 文件夹下创建一个 `config.json` 文件，格式如下：
 
 ```
