@@ -2,9 +2,36 @@ package main
 
 import "sort"
 
-func assign() {
-	assistantAssignments = make(map[string]int)
+type Assignment struct {
+	Name  string
+	Count int
+}
 
+// 预处理
+func preProcess() {
+	assistantAssignments = make(map[string]int)
+}
+
+// 将小黑屋的负责人进行排班，SDR 是 Small-Dark-Room 的缩写
+// TODO: 使用非硬编码的方式实现这部分的逻辑
+func assignSDRPricipal() {
+	timeSlotAssignments[4] = append(timeSlotAssignments[4], "黄海洋")
+	timeSlotAssignments[9] = append(timeSlotAssignments[9], "胡泽钊")
+	timeSlotAssignments[14] = append(timeSlotAssignments[14], "宋彦斌")
+	timeSlotAssignments[19] = append(timeSlotAssignments[19], "苏梓玲")
+	timeSlotAssignments[24] = append(timeSlotAssignments[24], "杨毅")
+	timeSlotAssignments[29] = append(timeSlotAssignments[29], "胡泽钊")
+	timeSlotAssignments[34] = append(timeSlotAssignments[34], "杨毅")
+}
+
+// 对前台负责人进行排班，R 是 Reception 的缩写
+// TODO: 使用非硬编码的方式实现这部分的逻辑
+func assignRPrincipal() {
+
+}
+
+// 分配普通助理
+func assignNormalAssistant() {
 	// 循环遍历每个时间段
 	for i := 0; i < int(NumSlots)*int(NumDays); i++ {
 		availableAssistants := []Assignment{}
@@ -35,4 +62,10 @@ func assign() {
 			assistantAssignments[availableAssistants[j].Name]++
 		}
 	}
+}
+
+func assign() {
+	preProcess()
+	assignSDRPricipal()
+	assignNormalAssistant()
 }

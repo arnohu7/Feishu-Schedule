@@ -40,7 +40,6 @@ func main() {
 		return
 	}
 
-	// 业务处理
 	// 创建一个字典来存储每个人的姓名以及可值班的时间
 	scheduleMap = make(map[string][int(NumSlots) * int(NumDays)]bool)
 
@@ -78,7 +77,8 @@ func main() {
 		}
 
 		// 将提交人和可值班时间添加到字典中
-		scheduleMap[larkcore.Prettify(submitter)] = schedule
+		submitter = larkcore.Prettify(submitter)
+		scheduleMap[submitter[1:len(submitter)-1]] = schedule
 	}
 
 	// 调用 assign 函数进行排班
@@ -98,7 +98,7 @@ func main() {
 	}
 
 	// 遍历 schedule 数组,为每条记录创建并发送请求
-	for _, record := range schedule {
+	for i, record := range schedule {
 		req_put := larkbitable.NewCreateAppTableRecordReqBuilder().
 			AppToken(config.APPToken).
 			TableId(config.WriteTableID).
@@ -117,6 +117,7 @@ func main() {
 
 		if !resp.Success() {
 			// 处理服务器返回的错误
+			fmt.Printf("第 %d 条记录提交出错", i)
 			fmt.Println("Server Error:", resp.Code, resp.Msg, resp.RequestId())
 		}
 	}

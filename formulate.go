@@ -1,8 +1,8 @@
 package main
 
 // formulate 函数用于格式化班表数据，便于后续的提交
-func formulate() [4*int(NumSlots) - 2]map[string]interface{} {
-	var schedule [18]map[string]interface{}
+func formulate() [4*int(NumSlots) - 1]map[string]interface{} {
+	var schedule [4*int(NumSlots) - 1]map[string]interface{}
 
 	for i := range schedule {
 		schedule[i] = make(map[string]interface{})
@@ -52,7 +52,7 @@ func formulate() [4*int(NumSlots) - 2]map[string]interface{} {
 		// 将助理数据写入 schedule
 		for j, assistant := range assistants {
 			scheduleIndex := baseIndex + j
-			schedule[scheduleIndex][day] = assistant[1 : len(assistant)-1]
+			schedule[scheduleIndex][day] = assistant
 			schedule[scheduleIndex]["时间"] = timeSlot
 		}
 	}

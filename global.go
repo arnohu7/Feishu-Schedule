@@ -24,11 +24,6 @@ const (
 	NumSlots
 )
 
-type Assignment struct {
-	Name  string
-	Count int
-}
-
 // scheduleMap 用来存放助理提交的班表
 var scheduleMap map[string][int(NumSlots) * int(NumDays)]bool
 

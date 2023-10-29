@@ -50,5 +50,5 @@ go install -v golang.org/x/tools/gopls@latest
 配置好 `config.json` 之后，在命令行中运行以下指令即可看到班表的输出结果：
 
 ```
-go run main.go
+go run .
 ```
