@@ -60,9 +60,6 @@ func preProcess() {
 	}
 	rPrincipleSet = make(RPrincipleSet)
 	rPrincipleSet.Add(RPrincipleToAdd...)
-	for item := range rPrincipleSet {
-		fmt.Println(item)
-	}
 }
 
 // 将小黑屋的负责人进行排班，SDR 是 Small-Dark-Room 的缩写
@@ -79,10 +76,12 @@ func assignSDRPricipal() {
 
 // 分配助理
 func assignAssistant() {
+	// 循环遍历每个时间段
 	for i := 0; i < int(NumSlots)*int(NumDays); i++ {
 		availableAssistants := []Assignment{}
-		var rPrincipalAssigned bool
+		rPrincipalAssigned := len(timeSlotAssignments[i]) != 0
 
+		// 找出当前时间段所有可以工作的助理
 		for assistant, availability := range scheduleMap {
 			if availability[i] {
 				totalHours := assistantAssignments[assistant]
@@ -93,25 +92,51 @@ func assignAssistant() {
 			}
 		}
 
-		sort.Slice(availableAssistants, func(a, b int) bool {
-			return availableAssistants[a].TotalHours < availableAssistants[b].TotalHours
-		})
+		// 如果当前时间段是 9:00-10:00 ，让可以在两个时间段同时值班的助理优先
+		// 其它时间段则只考虑目前已经安排的工作时长
+		if i%int(NumSlots) == 0 {
+			sort.SliceStable(availableAssistants, func(a, b int) bool {
+				aAvailableBoth := scheduleMap[availableAssistants[a].Name][i] && scheduleMap[availableAssistants[a].Name][i+1]
+				bAvailableBoth := scheduleMap[availableAssistants[b].Name][i] && scheduleMap[availableAssistants[b].Name][i+1]
 
-		if i%5 != 4 {
+				if aAvailableBoth == bAvailableBoth {
+					return availableAssistants[a].TotalHours < availableAssistants[b].TotalHours
+				} else {
+					return aAvailableBoth && !bAvailableBoth
+				}
+			})
+
+		} else {
+			sort.Slice(availableAssistants, func(a, b int) bool {
+				return availableAssistants[a].TotalHours < availableAssistants[b].TotalHours
+			})
+		}
+
+		if i%5 != 4 && !rPrincipalAssigned {
 			for j := 0; j < len(availableAssistants); j++ {
 				if _, isRPrincipal := rPrincipleSet[availableAssistants[j].Name]; isRPrincipal {
 					timeSlotAssignments[i] = append(timeSlotAssignments[i], availableAssistants[j].Name)
 					assistantAssignments[availableAssistants[j].Name] += slotDuration(i)
+
+					// 9:00-10:00 特殊判断，若某个负责人已经在 9:00-10:00 上班了且下个时间有空，则他应该也要在 10:00-12:00 上班
+					if i%5 == 0 {
+						if scheduleMap[availableAssistants[j].Name][i+1] {
+							timeSlotAssignments[i+1] = append(timeSlotAssignments[i+1], availableAssistants[j].Name)
+							assistantAssignments[availableAssistants[j].Name] += slotDuration(i + 1)
+						}
+					}
+
 					rPrincipalAssigned = true
 					break
 				}
 			}
 		}
 
-		if !rPrincipalAssigned {
+		if !rPrincipalAssigned && i%5 != 4 {
 			fmt.Println("警告：没有可用的负责人在当前的时段", i)
 		}
 
+		// 对其它助理进行排班
 		maxAssignments := 4
 		if i%5 == 4 {
 			maxAssignments = 3
@@ -127,6 +152,14 @@ func assignAssistant() {
 			if !alreadyAssigned {
 				timeSlotAssignments[i] = append(timeSlotAssignments[i], availableAssistants[j].Name)
 				assistantAssignments[availableAssistants[j].Name] += slotDuration(i)
+
+				// 9:00-10:00 特殊判断，若某个助理已经在 9:00-10:00 上班了且下个时间有空，则他应该也要在 10:00-12:00 上班
+				if i%5 == 0 {
+					if scheduleMap[availableAssistants[j].Name][i+1] {
+						timeSlotAssignments[i+1] = append(timeSlotAssignments[i+1], availableAssistants[j].Name)
+						assistantAssignments[availableAssistants[j].Name] += slotDuration(i + 1)
+					}
+				}
 			}
 		}
 	}

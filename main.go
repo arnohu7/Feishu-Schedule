@@ -120,5 +120,28 @@ func main() {
 			fmt.Printf("第 %d 条记录提交出错", i)
 			fmt.Println("Server Error:", resp.Code, resp.Msg, resp.RequestId())
 		}
+
+		if i%4 == 3 {
+			req_put_blank := larkbitable.NewCreateAppTableRecordReqBuilder().
+				AppToken(config.APPToken).
+				TableId(config.WriteTableID).
+				AppTableRecord(larkbitable.NewAppTableRecordBuilder().
+					Fields(map[string]interface{}{`时间`: ``, `周一`: ``, `周二`: ``, `周三`: ``, `周四`: ``, `周五`: ``, `周六`: ``, `周日`: ``}).
+					Build()).
+				Build()
+
+			resp, err := client.Bitable.AppTableRecord.Create(context.Background(), req_put_blank, larkcore.WithUserAccessToken(config.AccessToken))
+
+			if err != nil {
+				// 打印错误并可能终止循环
+				fmt.Println("Error:", err)
+				break
+			}
+
+			if !resp.Success() {
+				// 处理服务器返回的错误
+				fmt.Println("Server Error:", resp.Code, resp.Msg, resp.RequestId())
+			}
+		}
 	}
 }
