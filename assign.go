@@ -1,15 +1,54 @@
 package main
 
-import "sort"
+import (
+	"fmt"
+	"sort"
+)
 
 type Assignment struct {
 	Name  string
 	Count int
 }
 
+type RPrincipleSet map[string]bool
+
+var rPrincipleSet RPrincipleSet
+
+// Add 方法用于将一个切片的元素添加到集合中
+func (set RPrincipleSet) Add(items ...string) {
+	for _, item := range items {
+		set[item] = true
+	}
+}
+
 // 预处理
+// TODO: 使用非硬编码的方式实现这部分的逻辑
 func preProcess() {
 	assistantAssignments = make(map[string]int)
+
+	RPrincipleToAdd := []string{
+		"黄宝莹",
+		"黄洪彬",
+		"黄培轩",
+		"赖广麟",
+		"林亮秋",
+		"罗雪源",
+		"裴江博",
+		"秦绍润",
+		"宋彦斌",
+		"苏梓玲",
+		"唐苛耕",
+		"许泽杭",
+		"杨毅",
+		"叶桂昂",
+		"赵鑫",
+		"郑桐",
+	}
+	rPrincipleSet = make(RPrincipleSet)
+	rPrincipleSet.Add(RPrincipleToAdd...)
+	for item := range rPrincipleSet {
+		fmt.Println(item)
+	}
 }
 
 // 将小黑屋的负责人进行排班，SDR 是 Small-Dark-Room 的缩写
@@ -24,17 +63,12 @@ func assignSDRPricipal() {
 	timeSlotAssignments[34] = append(timeSlotAssignments[34], "杨毅")
 }
 
-// 对前台负责人进行排班，R 是 Reception 的缩写
-// TODO: 使用非硬编码的方式实现这部分的逻辑
-func assignRPrincipal() {
-
-}
-
-// 分配普通助理
-func assignNormalAssistant() {
+// 分配助理
+func assignAssistant() {
 	// 循环遍历每个时间段
 	for i := 0; i < int(NumSlots)*int(NumDays); i++ {
 		availableAssistants := []Assignment{}
+		var rPrincipalAssigned bool // 标记该时间段是否已经分配了前台负责人
 
 		// 找出所有可以在这个时间段工作的助理
 		for assistant, availability := range scheduleMap {
@@ -51,15 +85,43 @@ func assignNormalAssistant() {
 			return availableAssistants[a].Count < availableAssistants[b].Count
 		})
 
-		// 选择最少被分配时间段的助理分配到这个时间段
+		// 首先确保前台分配一个前台负责人
+		if i%5 != 4 {
+			for j := 0; j < len(availableAssistants); j++ {
+				if _, isRPrincipal := rPrincipleSet[availableAssistants[j].Name]; isRPrincipal {
+					timeSlotAssignments[i] = append(timeSlotAssignments[i], availableAssistants[j].Name)
+					assistantAssignments[availableAssistants[j].Name]++
+					rPrincipalAssigned = true
+					break
+				}
+			}
+		}
+
+		if !rPrincipalAssigned {
+			fmt.Println("警告：没有可用的负责人在当前的时段", i)
+
+		}
+
+		// 分配其它助理
 		maxAssignments := 4
 		if i%5 == 4 {
 			// 对应 19:00-21:00 时间段
-			maxAssignments = 2
+			maxAssignments = 3
 		}
-		for j := 0; j < len(availableAssistants) && j < maxAssignments; j++ {
-			timeSlotAssignments[i] = append(timeSlotAssignments[i], availableAssistants[j].Name)
-			assistantAssignments[availableAssistants[j].Name]++
+		for j := 0; j < len(availableAssistants) && len(timeSlotAssignments[i]) < maxAssignments; j++ {
+			// 检查这个助理是否已被分配到这个时间段
+			alreadyAssigned := false
+			for _, assignedAssistant := range timeSlotAssignments[i] {
+				if assignedAssistant == availableAssistants[j].Name {
+					alreadyAssigned = true
+					break
+				}
+			}
+			// 如果这个助理没有被分配到这个时间段，则分配他/她
+			if !alreadyAssigned {
+				timeSlotAssignments[i] = append(timeSlotAssignments[i], availableAssistants[j].Name)
+				assistantAssignments[availableAssistants[j].Name]++
+			}
 		}
 	}
 }
@@ -67,5 +129,5 @@ func assignNormalAssistant() {
 func assign() {
 	preProcess()
 	assignSDRPricipal()
-	assignNormalAssistant()
+	assignAssistant()
 }
