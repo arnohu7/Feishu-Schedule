@@ -26,7 +26,7 @@ go install -v github.com/ramya-rao-a/go-outline@latest
 go install -v golang.org/x/tools/gopls@latest
 ```
 
-之后再在 `backend` 文件夹下创建一个 `config.json` 文件，格式如下：
+之后再在当前文件夹下创建一个 `config.json` 文件，格式如下：
 
 ```
 {
