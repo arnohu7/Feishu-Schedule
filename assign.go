@@ -6,8 +6,8 @@ import (
 )
 
 type Assignment struct {
-	Name  string
-	Count int
+	Name       string
+	TotalHours int
 }
 
 type RPrincipleSet map[string]bool
@@ -19,6 +19,20 @@ func (set RPrincipleSet) Add(items ...string) {
 	for _, item := range items {
 		set[item] = true
 	}
+}
+
+func slotDuration(i int) int {
+	switch i % 5 {
+	case 0:
+		return 60
+	case 1, 4:
+		return 120
+	case 2:
+		return 160
+	case 3:
+		return 110
+	}
+	return 0
 }
 
 // 预处理
@@ -65,32 +79,29 @@ func assignSDRPricipal() {
 
 // 分配助理
 func assignAssistant() {
-	// 循环遍历每个时间段
 	for i := 0; i < int(NumSlots)*int(NumDays); i++ {
 		availableAssistants := []Assignment{}
-		var rPrincipalAssigned bool // 标记该时间段是否已经分配了前台负责人
+		var rPrincipalAssigned bool
 
-		// 找出所有可以在这个时间段工作的助理
 		for assistant, availability := range scheduleMap {
 			if availability[i] {
+				totalHours := assistantAssignments[assistant]
 				availableAssistants = append(availableAssistants, Assignment{
-					Name:  assistant,
-					Count: assistantAssignments[assistant],
+					Name:       assistant,
+					TotalHours: totalHours,
 				})
 			}
 		}
 
-		// 按照助理的已被分配时间段的数量从小到大排序
 		sort.Slice(availableAssistants, func(a, b int) bool {
-			return availableAssistants[a].Count < availableAssistants[b].Count
+			return availableAssistants[a].TotalHours < availableAssistants[b].TotalHours
 		})
 
-		// 首先确保前台分配一个前台负责人
 		if i%5 != 4 {
 			for j := 0; j < len(availableAssistants); j++ {
 				if _, isRPrincipal := rPrincipleSet[availableAssistants[j].Name]; isRPrincipal {
 					timeSlotAssignments[i] = append(timeSlotAssignments[i], availableAssistants[j].Name)
-					assistantAssignments[availableAssistants[j].Name]++
+					assistantAssignments[availableAssistants[j].Name] += slotDuration(i)
 					rPrincipalAssigned = true
 					break
 				}
@@ -99,17 +110,13 @@ func assignAssistant() {
 
 		if !rPrincipalAssigned {
 			fmt.Println("警告：没有可用的负责人在当前的时段", i)
-
 		}
 
-		// 分配其它助理
 		maxAssignments := 4
 		if i%5 == 4 {
-			// 对应 19:00-21:00 时间段
 			maxAssignments = 3
 		}
 		for j := 0; j < len(availableAssistants) && len(timeSlotAssignments[i]) < maxAssignments; j++ {
-			// 检查这个助理是否已被分配到这个时间段
 			alreadyAssigned := false
 			for _, assignedAssistant := range timeSlotAssignments[i] {
 				if assignedAssistant == availableAssistants[j].Name {
@@ -117,10 +124,9 @@ func assignAssistant() {
 					break
 				}
 			}
-			// 如果这个助理没有被分配到这个时间段，则分配他/她
 			if !alreadyAssigned {
 				timeSlotAssignments[i] = append(timeSlotAssignments[i], availableAssistants[j].Name)
-				assistantAssignments[availableAssistants[j].Name]++
+				assistantAssignments[availableAssistants[j].Name] += slotDuration(i)
 			}
 		}
 	}
